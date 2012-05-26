@@ -1,0 +1,29 @@
+<?php
+/**
+ * Amqp configuration class.
+ *
+ * host =>
+ * the host of your RabbitMQ server
+ *
+ * port =>
+ * The port of your RabbitMQ server, default: 5672
+ *
+ * user =>
+ * The username
+ *
+ * pass =>
+ * The password
+ *
+ * vhost =>
+ * The RabbitMQ vhost to use, default: /
+ */
+class AMQP_CONFIG {
+
+	public $default = array(
+		'host' => 'localhost',
+		'port' => '5672',
+		'user' => '',
+		'pass' => '',
+		'vhost' => '/',
+	);
+}
