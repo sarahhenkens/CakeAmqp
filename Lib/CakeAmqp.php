@@ -56,16 +56,6 @@ class CakeAmqp extends Object {
  */
 	protected $_queues = array();
 
-	
-
-	private $__settings = array();
-	
-	private $Connection = null;
-	private $Channel = null;
-	private $__exchanges = array();
-	private $__queues = array();
-	private $connected = false;
-
 /**
  * Return a singleton instance of CakeAmqp.
  *
