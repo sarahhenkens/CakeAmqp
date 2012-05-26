@@ -19,7 +19,7 @@
  */
 class AMQP_CONFIG {
 
-	public $default = array(
+	public static $default = array(
 		'host' => 'localhost',
 		'port' => '5672',
 		'user' => '',
