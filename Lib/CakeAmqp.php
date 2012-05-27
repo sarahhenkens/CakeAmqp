@@ -139,7 +139,7 @@ class CakeAmqp extends Object {
 /**
  * Returns the current AMQPConnection object
  *
- * Will try to connect to the broken if no connection was made
+ * Will try to connect to the broker if no connection was made
  *
  * @return AMQPConnection 
  */
@@ -206,7 +206,7 @@ class CakeAmqp extends Object {
 	}
 
 /**
- * Declares an exchange on broken
+ * Declares an exchange on the broker
  *
  * available options:
  *
@@ -261,7 +261,7 @@ class CakeAmqp extends Object {
 	}
 
 /**
- * Declares a queue on broken
+ * Declares a queue on the broker
  *
  * available options:
  *
