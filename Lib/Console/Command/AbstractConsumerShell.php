@@ -36,22 +36,20 @@ abstract class AbstractConsumerShell extends AppShell {
 			throw new CakeException(__d('cake_amqp', '$queue parameter is not configured'));
 		}
 
-		$this->_amqp = new CakeAmqpConsumer($this->queue);
-
-		$this->_amqp->consume($this->consumerName, array($this, 'processMessage'));
+		$this->_amqp = new CakeAmqpConsumer($this->queue);	
 	}
 
 	protected function startListening() {
-		$this->_amqp->listen();
+		$this->_amqp->consume($this->consumerName, array($this, 'processMessage'));
 	}
 
-	public function processMessage($data) {
+	public function processMessage($consumer, $envelope, $data) {
 		if ($this->autoAck === true) {
-			$this->ack($message);
+			$consumer->ack($envelope);
 		}
 
-		$this->onMessage($data['body'], $data);
+		$this->onMessage($consumer, $envelope, $data);
 	}
 
-	abstract public function onMessage($payload, $data);
+	abstract public function onMessage($consumer, $envelope, $data);
 }

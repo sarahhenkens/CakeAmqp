@@ -66,16 +66,38 @@ class CakeAmqpConsumer extends CakeAmqpBase {
 /**
  * Callback to process messages from the queue
  *
- * @param type $envelope 
+ * @param AMQPEnvelope $envelope 
+ * @param AMQPQueue $queue
+ *
+ * @return void
  */
-	public function processMessage($envelope, $queue) {
-		$queue->ack($envelope->getDeliveryTag());
-
+	public function processMessage(AMQPEnvelope $envelope, AMQPQueue $queue) {
 		$data = array(
-			'object' => $envelope,
 			'body' => $envelope->getBody()
 		);
 
-		call_user_func($this->_callback, $data);
+		call_user_func($this->_callback, $this, $envelope, $data);
+	}
+
+/**
+ * Acks the message
+ *
+ * @param AMQPEnvelope $envelope
+ *
+ * @return void
+ */
+	public function ack(AMQPEnvelope $envelope) {
+		$this->_queues[$this->_consumerQueue]->ack($envelope->getDeliveryTag());
+	}
+
+/**
+ * Nacks the message
+ *
+ * @param AMQPEnvelope $envelope
+ *
+ * @return void
+ */
+	public function nack(AMQPEnvelope $envelope) {
+		$this->_queues[$this->_consumerQueue]->nack($envelope->getDeliveryTag());
 	}
 }
