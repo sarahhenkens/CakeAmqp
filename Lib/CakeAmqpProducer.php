@@ -23,7 +23,6 @@ class CakeAmqpProducer extends CakeAmqpBase {
 			throw new CakeException(__d('cake_amqp', 'Exchange does not exist: %s', $exchange));
 		}
 
-		$message = new PhpAmqpLib\Message\AMQPMessage($data, array('delivery-mode' => 2));
-		$this->_channel->basic_publish($message, $exchange, $routingKey, true);
+		$this->_exchanges[$exchange]->publish($data, $routingKey);
 	}
 }

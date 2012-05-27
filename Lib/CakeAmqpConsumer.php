@@ -12,6 +12,13 @@ class CakeAmqpConsumer extends CakeAmqpBase {
 	protected $_consumerQueue = '';
 
 /**
+ * Callback to receive messages on
+ *
+ * @var mixed 
+ */
+	protected $_callback = null;
+
+/**
  * CakeAmqp constructor which checks the configuration
  *
  * @throws CakeException 
@@ -43,27 +50,32 @@ class CakeAmqpConsumer extends CakeAmqpBase {
  * @param type $options 
  */
 	public function consume($consumerName, $callback, $options = array()) {
+		$this->_callback = $callback;
+
 		$this->connection();
 
 		if (!$this->connected()) {
 			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
 		}
 
-		$this->_channel->basic_consume($this->_consumerQueue, $consumerName, false, false, false, false, $callback);
+		$this->_queues[$this->_consumerQueue]->consume(array($this, 'processMessage'));
+
+		//$this->_channel->basic_consume($this->_consumerQueue, $consumerName, false, false, false, false, $callback);
 	}
 
 /**
- * Start listening
+ * Callback to process messages from the queue
  *
- * @throws CakeException 
+ * @param type $envelope 
  */
-	public function listen() {
-		if (!$this->connected()) {
-			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
-		}
+	public function processMessage($envelope, $queue) {
+		$queue->ack($envelope->getDeliveryTag());
 
-		while (count($this->_channel->callbacks)) {
-			$this->_channel->wait();
-		}
+		$data = array(
+			'object' => $envelope,
+			'body' => $envelope->getBody()
+		);
+
+		call_user_func($this->_callback, $data);
 	}
 }

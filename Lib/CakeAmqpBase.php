@@ -1,10 +1,10 @@
 <?php
-
+/*
 require_once __DIR__ . DS . '..' . DS . 'Vendor' . DS . 'autoloader.php';
 
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
-
+*/
 class CakeAmqpBase extends Object {
 
 /**
@@ -40,7 +40,12 @@ class CakeAmqpBase extends Object {
  *
  * @var array 
  */
-	protected $_exchangeTypes = array('topic', 'direct', 'fanout', 'headers');
+	protected $_exchangeTypes = array(
+		'topic' => AMQP_EX_TYPE_TOPIC,
+		'direct' => AMQP_EX_TYPE_DIRECT,
+		'fanout' => AMQP_EX_TYPE_FANOUT,
+		'headers' => AMQP_EX_TYPE_HEADER
+	);
 
 /**
  * Holds the configured exchanges
@@ -85,7 +90,7 @@ class CakeAmqpBase extends Object {
  */
 	function __destruct() {
 		if ($this->_connected) {
-			$this->_connection->close();
+			$this->_connection->disconnect();
 		}
 	}
 
@@ -104,14 +109,15 @@ class CakeAmqpBase extends Object {
 		try {
 			$this->_loadConfiguration();
 
-			$this->_connection = new AMQPConnection(
-				$this->_config['host'],
-				$this->_config['port'],
-				$this->_config['user'],
-				$this->_config['pass'],
-				$this->_config['vhost']
-			);
-			$this->_channel = $this->_connection->channel();
+			$this->_connection = new AMQPConnection();
+			$this->_connection->setHost($this->_config['host']);
+			$this->_connection->setPort($this->_config['port']);
+			$this->_connection->setLogin($this->_config['user']);
+			$this->_connection->setPassword($this->_config['pass']);
+			$this->_connection->setVhost($this->_config['vhost']);
+			$this->_connection->connect();
+
+			$this->_channel = new AMQPChannel($this->_connection);
 
 			$this->_connected = true;
 
@@ -205,20 +211,16 @@ class CakeAmqpBase extends Object {
 
 		$options = array_merge($defaults, $options);
 
-		if (!in_array($options['type'], $this->_exchangeTypes)) {
-			throw new CakeException('cake_amqp', 'Exchange type not supported: %s', $options['type']);
+		if (!array_key_exists($options['type'], $this->_exchangeTypes)) {
+			throw new CakeException(__d('cake_amqp', 'Exchange type not supported: %s', $options['type']));
 		}
 
-		$this->_channel->exchange_declare($name,
-			$options['type'],
-			$options['passive'],
-			$options['durable'],
-			$options['auto_delete'],
-			$options['internal'],
-			$options['nowait']
-		);
-
-		$this->_exchanges[$name] = $options;
+		$exchange = new AMQPExchange($this->_channel);
+		$exchange->setName($name);
+		$exchange->setType($this->_exchangeTypes[$options['type']]);
+		$exchange->declare();
+//TODO: set the flags
+		$this->_exchanges[$name] = $exchange;
 	}
 
 /**
@@ -248,21 +250,17 @@ class CakeAmqpBase extends Object {
 			'passive' => false,
 			'durable' => false,
 			'exclusive' => false,
-			'auto_delete' => true,
-			'nowait' => false
+			'autodelete' => true,
 		);
 
 		$options = array_merge($defaults, $options);
 
-		$this->_channel->queue_declare($name,
-			$options['passive'],
-			$options['durable'],
-			$options['exclusive'],
-			$options['auto_delete'],
-			$options['nowait']
-		);
+		$queue = new AMQPQueue($this->_channel);
+		$queue->setName($name);
+		$queue->declare();
+//TODO: Set the flags
 
-		$this->_queues[$name] = $options;
+		$this->_queues[$name] = $queue;
 	}
 
 /**
@@ -299,7 +297,7 @@ class CakeAmqpBase extends Object {
 				throw new CakeException(__d('cake_amqp', 'Queue does not exist: %s', $queue));
 			}
 
-			$this->_channel->queue_bind($queue, $exchange, $routingKey, $options['nowait']);
+			$this->_queues[$queue]->bind($exchange, $routingKey);
 		}
 	}
 

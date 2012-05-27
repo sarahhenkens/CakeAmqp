@@ -45,21 +45,12 @@ abstract class AbstractConsumerShell extends AppShell {
 		$this->_amqp->listen();
 	}
 
-	public function processMessage($message) {
+	public function processMessage($data) {
 		if ($this->autoAck === true) {
 			$this->ack($message);
 		}
 
-		$data = array(
-			'routingKey' => $message->delivery_info['routing_key'],
-			'message' => $message
-		);
-
-		$this->onMessage($message->body, $data);
-	}
-
-	public function ack($message) {
-		$message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+		$this->onMessage($data['body'], $data);
 	}
 
 	abstract public function onMessage($payload, $data);
