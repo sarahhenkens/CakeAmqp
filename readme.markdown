@@ -6,8 +6,8 @@ Very alpha code, api is constantly changing. Highly recommend not using it in pr
 
 ## Requirements
 
- * CakePHP 2.1
- * PHP 5.3 or higher
+ * CakePHP 2.1 or higher
+ * PECL Amqp 1.0.3 or higher
 
 ## License
 
