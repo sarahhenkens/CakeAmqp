@@ -57,6 +57,20 @@ class CakeAmqp extends Object {
 	protected $_queues = array();
 
 /**
+ * Flag for consumer mode
+ *
+ * @var boolean 
+ */
+	protected $_consumerMode = false;
+
+/**
+ * Name of the queue used in consumer mode
+ *
+ * @var string 
+ */
+	protected $_consumerQueue = '';
+
+/**
  * Return a singleton instance of CakeAmqp.
  *
  * @return CakeAmqp instance
@@ -70,11 +84,31 @@ class CakeAmqp extends Object {
 	}
 
 /**
+ * Enable consumer mode
+ *
+ * @param string queue
+ * @return CakerAmqp instance 
+ */
+	static function consumer($queue) {
+		if (self::$_instance !== null) {
+			throw new CakeException(__d('cake_amqp', 'Cannot initialize consumer mode, instance already exists.'));
+		}
+		self::$_instance = new CakeAmqp($queue);
+
+		return self::$_instance;
+	}
+
+/**
  * CakeAmqp constructor which checks the configuration
  *
  * @throws CakeException 
  */
-	function __construct() {
+	function __construct($consumerQueue = null) {
+		if ($consumerQueue !== null) {
+			$this->_consumerMode = true;
+			$this->_consumerQueue = $consumerQueue;
+		}
+
 		$path = APP . 'Config' . DS . 'amqp.php';
 
 		if (!file_exists($path)) {
@@ -141,24 +175,33 @@ class CakeAmqp extends Object {
  * @return void
  */
 	protected function _configure() {
-		foreach (Configure::read('CakeAmqp.exchanges') as $name => $options) {
-			if (is_string($options)) {
-				$name = $options;
-				$options = array();
+		if ($this->_consumerMode === true) {
+			if (!Configure::read('CakeAmqp.queues.' . $this->_consumerQueue)) {
+				throw new CakeException(__d('cake_amqp', 'Missing configurion for queue: %s', $this->_consumerQueue));
 			}
-			$this->declareExchange($name, $options);
-		}
-
-		foreach (Configure::read('CakeAmqp.queues') as $name => $options) {
-			if (is_string($options)) {
-				$name = $options;
-				$options = array();
+	
+			$options = Configure::read('CakeAmqp.queues.' . $this->_consumerQueue);
+			$this->declareQueue($this->_consumerQueue, $options);
+		} else {
+			foreach (Configure::read('CakeAmqp.exchanges') as $name => $options) {
+				if (is_string($options)) {
+					$name = $options;
+					$options = array();
+				}
+				$this->declareExchange($name, $options);
 			}
-			$this->declareQueue($name, $options);
-		}
 
-		foreach (Configure::read('CakeAmqp.bindings') as $routingKey => $options) {
-			$this->bind($routingKey, $options['exchange'], $options['queue'], $options);
+			foreach (Configure::read('CakeAmqp.queues') as $name => $options) {
+				if (is_string($options)) {
+					$name = $options;
+					$options = array();
+				}
+				$this->declareQueue($name, $options);
+			}
+
+			foreach (Configure::read('CakeAmqp.bindings') as $routingKey => $options) {
+				$this->bind($routingKey, $options['exchange'], $options['queue'], $options);
+			}
 		}
 	}
 
@@ -178,6 +221,10 @@ class CakeAmqp extends Object {
  * @param array $options 
  */
 	protected function declareExchange($name, $options = array()) {
+		if ($this->_consumerMode === true) {
+			return true;
+		}
+
 		if ($this->_connected === false) {
 			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
 		}
@@ -304,6 +351,10 @@ class CakeAmqp extends Object {
  * @param array $options 
  */
 	public function publish($exchange, $routingKey, $data, $options = array()) {
+		if ($this->_consumerMode === true) {
+			throw new CakeException(__d('cake_amqp', 'Cannot publish messages in consumer mode'));
+		}
+
 		$this->connection();
 
 		if (!$this->_connected) {
@@ -316,5 +367,44 @@ class CakeAmqp extends Object {
 
 		$message = new AMQPMessage($data, array('delivery-mode' => 2));
 		$this->_channel->basic_publish($message, $exchange, $routingKey, true);
+	}
+
+/**
+ * Setup consumer
+ *
+ * @param type $callback
+ * @param type $options 
+ */
+	public function consume($consumerName, $callback, $options = array()) {
+		if ($this->_consumerMode === false) {
+			throw new CakeException(__d('cake_amqp', 'Cannot consume messages in producer mode'));
+		}
+
+		$this->connection();
+
+		if (!$this->_connected) {
+			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
+		}
+
+		$this->_channel->basic_consume($this->_consumerQueue, $consumerName, false, false, false, false, $callback);
+	}
+
+/**
+ * Start listening
+ *
+ * @throws CakeException 
+ */
+	public function listen() {
+		if ($this->_consumerMode === false) {
+			throw new CakeException(__d('cake_amqp', 'Cannot consume messages in producer mode'));
+		}
+
+		if (!$this->_connected) {
+			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
+		}
+
+		while (count($this->_channel->callbacks)) {
+			$this->_channel->wait();
+		}
 	}
 }
