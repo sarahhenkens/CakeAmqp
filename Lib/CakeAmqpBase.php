@@ -48,6 +48,31 @@ class CakeAmqpBase extends Object {
 	);
 
 /**
+ * List of valid exchange flags
+ *
+ * @var array 
+ */
+	protected $_exchangeFlags = array(
+		'durable' => AMQP_DURABLE,
+		'passive' => AMQP_PASSIVE,
+		'auto_delete' => AMQP_AUTODELETE,
+		'internal' => AMQP_INTERNAL
+	);
+
+/**
+ * List of valid queue flags
+ *
+ * @var array 
+ */
+	protected $_queueFlags = array(
+		'durable' => AMQP_DURABLE,
+		'passive' => AMQP_PASSIVE,
+		'auto_delete' => AMQP_AUTODELETE,
+		'internal' => AMQP_INTERNAL,
+		'exclusive' => AMQP_EXCLUSIVE
+	);
+
+/**
  * Holds the configured exchanges
  *
  * @var array 
@@ -205,8 +230,7 @@ class CakeAmqpBase extends Object {
 			'passive' => false,
 			'durable' => false,
 			'auto_delete' => true,
-			'internal' => false,
-			'nowait' => false
+			'internal' => false
 		);
 
 		$options = array_merge($defaults, $options);
@@ -218,9 +242,28 @@ class CakeAmqpBase extends Object {
 		$exchange = new AMQPExchange($this->_channel);
 		$exchange->setName($name);
 		$exchange->setType($this->_exchangeTypes[$options['type']]);
+		$exchange->setFlags($this->__getExchangeFlags($options));
 		$exchange->declare();
-//TODO: set the flags
+
 		$this->_exchanges[$name] = $exchange;
+	}
+
+/**
+ * Returns the flags used for declaring an exchange
+ *
+ * @param array $options
+ * @return int 
+ */
+	private function __getExchangeFlags($options) {
+		$flags = 0;
+
+		foreach($options as $option => $enabled) {
+			if (array_key_exists($option, $this->_exchangeFlags) && $enabled) {
+				$flags = $flags | $this->_exchangeFlags[$option];
+			}
+		}
+
+		return $flags;
 	}
 
 /**
@@ -257,10 +300,28 @@ class CakeAmqpBase extends Object {
 
 		$queue = new AMQPQueue($this->_channel);
 		$queue->setName($name);
+		$queue->setFlags($this->__getQueueFlags($options));
 		$queue->declare();
-//TODO: Set the flags
 
 		$this->_queues[$name] = $queue;
+	}
+
+/**
+ * Returns the flags used for declaring a queue
+ *
+ * @param array $options
+ * @return int 
+ */
+	private function __getQueueFlags($options) {
+		$flags = 0;
+
+		foreach($options as $option => $enabled) {
+			if (array_key_exists($option, $this->_queueFlags) && $enabled) {
+				$flags = $flags | $this->_queueFlags[$option];
+			}
+		}
+
+		return $flags;
 	}
 
 /**
