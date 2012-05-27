@@ -84,6 +84,16 @@ class CakeAmqp extends Object {
 	}
 
 /**
+ * Disconnects the broker and removes the instance 
+ *
+ */
+	public static function reset() {
+		if (self::$_instance !== null) {
+			self::$_instance = null;
+		}
+	}
+
+/**
  * Enable consumer mode
  *
  * @param string queue
@@ -406,5 +416,14 @@ class CakeAmqp extends Object {
 		while (count($this->_channel->callbacks)) {
 			$this->_channel->wait();
 		}
+	}
+
+/**
+ * Returns true if running in consumer mode
+ *
+ * @return boolean 
+ */
+	public function isConsumer() {
+		return $this->_consumerMode;
 	}
 }
