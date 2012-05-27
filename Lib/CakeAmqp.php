@@ -103,7 +103,8 @@ class CakeAmqp extends Object {
 		if (self::$_instance !== null) {
 			throw new CakeException(__d('cake_amqp', 'Cannot initialize consumer mode, instance already exists.'));
 		}
-		self::$_instance = new CakeAmqp($queue);
+		self::$_instance = new CakeAmqp();
+		self::$_instance->consumerMode($queue);
 
 		return self::$_instance;
 	}
@@ -113,12 +114,7 @@ class CakeAmqp extends Object {
  *
  * @throws CakeException 
  */
-	function __construct($consumerQueue = null) {
-		if ($consumerQueue !== null) {
-			$this->_consumerMode = true;
-			$this->_consumerQueue = $consumerQueue;
-		}
-
+	function __construct() {
 		$path = APP . 'Config' . DS . 'amqp.php';
 
 		if (!file_exists($path)) {
@@ -419,11 +415,22 @@ class CakeAmqp extends Object {
 	}
 
 /**
- * Returns true if running in consumer mode
+ * Set/Get consumer mode
  *
- * @return boolean 
+ * If no param is given, it returns true if consumer mode is enabled
+ * and false in producer mode
+ *
+ * @param string $queue The queue name to consume on
+ * @return boolean|CakeAmqp 
  */
-	public function isConsumer() {
-		return $this->_consumerMode;
+	public function consumerMode($queue = null) {
+		if ($queue === null) {
+			return $this->_consumerMode;
+		}
+
+		$this->_consumerMode = true;
+		$this->_consumerQueue = $queue;
+
+		return $this;
 	}
 }

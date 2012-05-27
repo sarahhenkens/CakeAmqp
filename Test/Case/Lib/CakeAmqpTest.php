@@ -34,7 +34,7 @@ class CakeAmqpTest extends CakeTestCase {
 	public function testGetInstance() {
 		$instance = CakeAmqp::getInstance();
 		$this->assertTrue($instance instanceof CakeAmqp);
-		$this->assertFalse($instance->isConsumer());
+		$this->assertFalse($instance->consumerMode());
 	}
 
 /**
@@ -45,7 +45,7 @@ class CakeAmqpTest extends CakeTestCase {
 	public function testConsumer() {
 		$instance = CakeAmqp::consumer('test');
 		$this->assertTrue($instance instanceof CakeAmqp);
-		$this->assertTrue($instance->isConsumer());
+		$this->assertTrue($instance->consumerMode());
 	}
 
 /**
