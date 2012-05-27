@@ -71,6 +71,20 @@ class CakeAmqp extends Object {
 	protected $_consumerQueue = '';
 
 /**
+ * Datasource being used
+ *
+ * @var string 
+ */
+	protected $_datasource = null;
+
+/**
+ * Connection configuration
+ *
+ * @var array 
+ */
+	protected $_config = array();
+
+/**
  * Return a singleton instance of CakeAmqp.
  *
  * @return CakeAmqp instance
@@ -114,7 +128,8 @@ class CakeAmqp extends Object {
  *
  * @throws CakeException 
  */
-	function __construct() {
+	function __construct($datasource = 'default') {
+		$this->_datasource = $datasource;
 	}
 
 /**
@@ -140,12 +155,14 @@ class CakeAmqp extends Object {
 		}
 
 		try {
+			$this->_loadConfiguration();
+
 			$this->_connection = new AMQPConnection(
-				AMQP_CONFIG::$default['host'],
-				AMQP_CONFIG::$default['port'],
-				AMQP_CONFIG::$default['user'],
-				AMQP_CONFIG::$default['pass'],
-				AMQP_CONFIG::$default['vhost']
+				$this->_config['host'],
+				$this->_config['port'],
+				$this->_config['user'],
+				$this->_config['pass'],
+				$this->_config['vhost']
 			);
 			$this->_channel = $this->_connection->channel();
 
@@ -161,27 +178,30 @@ class CakeAmqp extends Object {
 	}
 
 /**
+ * Loads the datasource configuration
+ *
+ * @throws CakeException 
+ */
+	protected function _loadConfiguration() {
+		if (!class_exists('AMQP_CONFIG')) {
+			$path = APP . 'Config' . DS . 'amqp.php';
+
+			if (!file_exists($path)) {
+				throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
+			}
+
+			require_once($path);
+		}
+
+		$this->_config = AMQP_CONFIG::${$this->_datasource};
+	}
+
+/**
  * Declares configured exchanges, queues and bindings 
  *
  * @return void
  */
 	protected function _configure() {
-		$path = APP . 'Config' . DS . 'amqp.php';
-
-		if (!file_exists($path)) {
-			throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
-		}
-
-		require_once($path);
-
-		if (!class_exists('AMQP_CONFIG')) {
-			throw new CakeException(__d('cake_amqp', 'Configure file is not valid: missing AMQP_CONFIG'));
-		}
-
-		if (!Configure::read('CakeAmqp')) {
-			throw new CakeException(__d('cake_amqp', 'No bindings configuration found'));
-		}
-
 		if ($this->_consumerMode === true) {
 			if (!Configure::read('CakeAmqp.queues.' . $this->_consumerQueue)) {
 				throw new CakeException(__d('cake_amqp', 'Missing configurion for queue: %s', $this->_consumerQueue));
@@ -190,7 +210,7 @@ class CakeAmqp extends Object {
 			$options = Configure::read('CakeAmqp.queues.' . $this->_consumerQueue);
 			$this->declareQueue($this->_consumerQueue, $options);
 		} else {
-			foreach (Configure::read('CakeAmqp.exchanges') as $name => $options) {
+			foreach ((array)Configure::read('CakeAmqp.exchanges') as $name => $options) {
 				if (is_string($options)) {
 					$name = $options;
 					$options = array();
@@ -198,7 +218,7 @@ class CakeAmqp extends Object {
 				$this->declareExchange($name, $options);
 			}
 
-			foreach (Configure::read('CakeAmqp.queues') as $name => $options) {
+			foreach ((array)Configure::read('CakeAmqp.queues') as $name => $options) {
 				if (is_string($options)) {
 					$name = $options;
 					$options = array();
@@ -206,7 +226,7 @@ class CakeAmqp extends Object {
 				$this->declareQueue($name, $options);
 			}
 
-			foreach (Configure::read('CakeAmqp.bindings') as $routingKey => $options) {
+			foreach ((array)Configure::read('CakeAmqp.bindings') as $routingKey => $options) {
 				$this->bind($routingKey, $options['exchange'], $options['queue'], $options);
 			}
 		}

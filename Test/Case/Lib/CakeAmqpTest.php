@@ -15,6 +15,9 @@ class CakeAmqpTest extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
+		Configure::write('CakeAmqp', array());
+
+		$this->CakeAmqp = new CakeAmqp('test');
 	}
 
 /**
@@ -23,6 +26,8 @@ class CakeAmqpTest extends CakeTestCase {
  * @return void
  */
 	public function tearDown() {
+		unset($this->CakeAmqp);
+
 		CakeAmqp::reset();
 	}
 
@@ -56,6 +61,15 @@ class CakeAmqpTest extends CakeTestCase {
  */
 	public function testConsumerException() {
 		CakeAmqp::getInstance();
-		CakeAmqp::consumer('test');
+		CakeAmqp::consumer('test_queue');
+	}
+
+/**
+ * Tests connecting to the broker
+ * 
+ */
+	public function testConnection() {
+		$connection = $this->CakeAmqp->connection();
+		$this->assertTrue($connection instanceof PhpAmqpLib\Connection\AMQPConnection);
 	}
 }

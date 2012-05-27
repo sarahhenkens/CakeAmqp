@@ -26,4 +26,12 @@ class AMQP_CONFIG {
 		'pass' => '',
 		'vhost' => '/',
 	);
+
+	public static $test = array(
+		'host' => 'localhost',
+		'port' => '5672',
+		'user' => 'user',
+		'pass' => 'password',
+		'vhost' => 'test-vhost',
+	);
 }
