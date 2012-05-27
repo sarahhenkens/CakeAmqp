@@ -1,7 +1,7 @@
 <?php
-App::uses('CakeAmqp', 'CakeAmqp.Lib');
+App::uses('CakeAmqpConsumer', 'CakeAmqp.Lib');
 
-class AbstractConsumerShell extends AppShell {
+abstract class AbstractConsumerShell extends AppShell {
 
 /**
  * The name of the consumer
@@ -36,16 +36,16 @@ class AbstractConsumerShell extends AppShell {
 			throw new CakeException(__d('cake_amqp', '$queue parameter is not configured'));
 		}
 
-		$this->_amqp = CakeAmqp::consumer($this->queue);
+		$this->_amqp = new CakeAmqpConsumer($this->queue);
 
-		$this->_amqp->consume($this->consumerName, array($this, '_processMessage'));
+		$this->_amqp->consume($this->consumerName, array($this, 'processMessage'));
 	}
 
 	protected function startListening() {
 		$this->_amqp->listen();
 	}
 
-	protected function _processMessage($message) {
+	public function processMessage($message) {
 		if ($this->autoAck === true) {
 			$this->ack($message);
 		}
