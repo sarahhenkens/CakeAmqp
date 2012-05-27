@@ -8,6 +8,10 @@ env:
   - CAKE_VERSION=2.2
 
 before_script:
+  - rabbitmq-server -detached
+  - rabbitmqctl add_vhost test
+  - rabbitmqctl add_user test test
+  - rabbitmqctl set_permissions -p test test ".*" ".*" ".*"
   - git clone --depth 1 git://github.com/cakephp/cakephp ../cakephp && cd ../cakephp && git checkout $CAKE_VERSION
   - cp -R ../CakeAmqp plugins/CakeAmqp
 
