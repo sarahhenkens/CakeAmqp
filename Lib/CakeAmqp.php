@@ -115,21 +115,6 @@ class CakeAmqp extends Object {
  * @throws CakeException 
  */
 	function __construct() {
-		$path = APP . 'Config' . DS . 'amqp.php';
-
-		if (!file_exists($path)) {
-			throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
-		}
-
-		require_once($path);
-
-		if (!class_exists('AMQP_CONFIG')) {
-			throw new CakeException(__d('cake_amqp', 'Configure file is not valid: missing AMQP_CONFIG'));
-		}
-
-		if (!Configure::read('CakeAmqp')) {
-			throw new CakeException(__d('cake_amqp', 'No bindings configuration found'));
-		}
 	}
 
 /**
@@ -181,6 +166,22 @@ class CakeAmqp extends Object {
  * @return void
  */
 	protected function _configure() {
+		$path = APP . 'Config' . DS . 'amqp.php';
+
+		if (!file_exists($path)) {
+			throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
+		}
+
+		require_once($path);
+
+		if (!class_exists('AMQP_CONFIG')) {
+			throw new CakeException(__d('cake_amqp', 'Configure file is not valid: missing AMQP_CONFIG'));
+		}
+
+		if (!Configure::read('CakeAmqp')) {
+			throw new CakeException(__d('cake_amqp', 'No bindings configuration found'));
+		}
+
 		if ($this->_consumerMode === true) {
 			if (!Configure::read('CakeAmqp.queues.' . $this->_consumerQueue)) {
 				throw new CakeException(__d('cake_amqp', 'Missing configurion for queue: %s', $this->_consumerQueue));
