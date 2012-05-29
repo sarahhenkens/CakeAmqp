@@ -206,15 +206,16 @@ class CakeAmqpBase extends Object {
  *
  * available options:
  *
- * - type: string (see $_exchangeTypes for valid types)
+ * - type: string
  * - passive: boolean
  * - durable: boolean
  * - auto_delete: boolean
  * - internal: boolean
- * - nowait: boolean
  *
  * @param string $name
- * @param array $options 
+ * @param array $options
+ *
+ * @return CakeAmqpBase
  */
 	protected function declareExchange($name, $options = array()) {
 		if ($this->_connected === false) {
@@ -246,6 +247,8 @@ class CakeAmqpBase extends Object {
 		$exchange->declare();
 
 		$this->_exchanges[$name] = $exchange;
+
+		return $this;
 	}
 
 /**
@@ -279,6 +282,8 @@ class CakeAmqpBase extends Object {
  *
  * @param string $name
  * @param array $options 
+ *
+ * @return CakeAmqpBase
  */
 	protected function declareQueue($name, $options = array()) {
 		if ($this->_connected === false) {
@@ -304,6 +309,8 @@ class CakeAmqpBase extends Object {
 		$queue->declare();
 
 		$this->_queues[$name] = $queue;
+
+		return $this;
 	}
 
 /**
@@ -335,7 +342,9 @@ class CakeAmqpBase extends Object {
  * @param string $exchange
  * @param string|array $queues
  * @param array $options
- * @throws CakeException 
+ * @throws CakeException
+ *
+ * @return CakeAmqpBase
  */
 	protected function bind($routingKey, $exchange, $queues, $options) {
 		if ($this->_connected === false) {
@@ -360,6 +369,8 @@ class CakeAmqpBase extends Object {
 
 			$this->_queues[$queue]->bind($exchange, $routingKey);
 		}
+
+		return $this;
 	}
 
 /**

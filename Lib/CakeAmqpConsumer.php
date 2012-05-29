@@ -21,16 +21,18 @@ class CakeAmqpConsumer extends CakeAmqpBase {
 /**
  * CakeAmqp constructor which checks the configuration
  *
+ * @param $queue The name of the queue to consume one
+ * @param $config Configuration to use
  * @throws CakeException 
  */
-	function __construct($queue, $datasource = 'default') {
-		parent::__construct($datasource);
+	function __construct($queue, $config = 'default') {
+		parent::__construct($config);
 
 		$this->_consumerQueue = $queue;
 	}
 
 /**
- * Declares configured exchanges, queues and bindings 
+ * Consumers only need to declare queues to listen on
  *
  * @return void
  */
@@ -46,8 +48,14 @@ class CakeAmqpConsumer extends CakeAmqpBase {
 /**
  * Setup consumer
  *
- * @param type $callback
- * @param type $options 
+ * callback function receives the following 3 parameters
+ *  - CakeAmqpConsumer $consumer: the instance of the consumer
+ *  - AMQPEnvelope $envelope: The message
+ *  - array $data: Meta data
+ * 
+ * @param string $consumerName Name of the consumer
+ * @param mixed $callback Callback to receive messages on
+ * @param array $options
  */
 	public function consume($consumerName, $callback, $options = array()) {
 		$this->_callback = $callback;
@@ -59,14 +67,12 @@ class CakeAmqpConsumer extends CakeAmqpBase {
 		}
 
 		$this->_queues[$this->_consumerQueue]->consume(array($this, 'processMessage'));
-
-		//$this->_channel->basic_consume($this->_consumerQueue, $consumerName, false, false, false, false, $callback);
 	}
 
 /**
- * Callback to process messages from the queue
+ * Callback to process messages received from the queue
  *
- * @param AMQPEnvelope $envelope 
+ * @param AMQPEnvelope $envelope
  * @param AMQPQueue $queue
  *
  * @return void

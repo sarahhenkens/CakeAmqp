@@ -43,7 +43,14 @@ abstract class AbstractConsumerShell extends AppShell {
 		$this->_amqp->consume($this->consumerName, array($this, 'processMessage'));
 	}
 
-	public function processMessage($consumer, $envelope, $data) {
+/**
+ * Callback to receive 
+ *
+ * @param CakeAmqpConsumer $consumer
+ * @param AMQPEnvelope $envelope
+ * @param array $data 
+ */
+	public function processMessage(CakeAmqpConsumer $consumer, AMQPEnvelope $envelope, $data) {
 		if ($this->autoAck === true) {
 			$consumer->ack($envelope);
 		}
@@ -51,5 +58,5 @@ abstract class AbstractConsumerShell extends AppShell {
 		$this->onMessage($consumer, $envelope, $data);
 	}
 
-	abstract public function onMessage($consumer, $envelope, $data);
+	abstract public function onMessage(CakeAmqpConsumer $consumer, AMQPEnvelope $envelope, $data);
 }
