@@ -1,10 +1,5 @@
 <?php
-/*
-require_once __DIR__ . DS . '..' . DS . 'Vendor' . DS . 'autoloader.php';
 
-use PhpAmqpLib\Connection\AMQPConnection;
-use PhpAmqpLib\Message\AMQPMessage;
-*/
 class CakeAmqpBase extends Object {
 
 /**
