@@ -1,6 +1,6 @@
 # Amqp Plugin for CakePHP
 
-![Travis Build Status](https://secure.travis-ci.org/jellehenkens/CakeAmqp.png)
+[![Build Status](https://secure.travis-ci.org/jellehenkens/CakeAmqp.png?branch=master)](http://travis-ci.org/jellehenkens/CakeAmqp)
 
 Very alpha code, api is constantly changing. Highly recommend not using it in production.
 
