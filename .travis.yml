@@ -12,7 +12,7 @@ before_script:
   - cp -R ../CakeAmqp plugins/CakeAmqp
 
 script:
-  - ./lib/Cake/Console/cake test CakeAmqp AllCakeAmqp
+  - ./lib/Cake/Console/cake test CakeAmqp AllCakeAmqpTests
 
 
 notifications:
