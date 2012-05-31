@@ -1,6 +1,6 @@
 <?php
 
-class AllCakeAmqpTest extends PHPUnit_Framework_TestSuite {
+class AllCakeAmqpTestsTest extends PHPUnit_Framework_TestSuite {
 
 /**
  * Suite define the tests for this suite

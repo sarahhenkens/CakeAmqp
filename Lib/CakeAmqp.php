@@ -9,7 +9,7 @@ class CakeAmqp extends Object {
  *
  * @var CakeAmqpProducer 
  */
-	private static $__instance = null;
+	protected static $_instance = null;
 
 /**
  * Singleton factory method to get the instance of a producer
@@ -17,11 +17,11 @@ class CakeAmqp extends Object {
  * @return CakeAmqpProducer 
  */
 	public static function getInstance() {
-		if (self::$__instance == null) {
-			self::$__instance = new CakeAmqpProducer();
+		if (self::$_instance == null) {
+			self::$_instance = new CakeAmqpProducer();
 		}
 
-		return self::$__instance;
+		return self::$_instance;
 	}
 
 /**
