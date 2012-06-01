@@ -3,13 +3,6 @@
 class CakeAmqpBase extends Object {
 
 /**
- * Holds the singleton instance
- *
- * @var CakeAmqp 
- */
-	static protected $_instance = null;
-
-/**
  * Holds the flag if a connection has been made to the AMQP broker
  *
  * @var boolean 
