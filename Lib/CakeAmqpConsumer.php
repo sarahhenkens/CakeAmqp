@@ -36,13 +36,17 @@ class CakeAmqpConsumer extends CakeAmqpBase {
  *
  * @return void
  */
-	protected function _configure() {
-		if (!Configure::read('CakeAmqp.queues.' . $this->_consumerQueue)) {
+	public function declareConfig($config = array()) {
+		$appConfig = Configure::read('CakeAmqp');
+		if (empty($config)) {
+			$config = $appConfig;
+		}
+
+		if (!isset($config['queues'][$this->_consumerQueue])) {
 			throw new CakeException(__d('cake_amqp', 'Missing configurion for queue: %s', $this->_consumerQueue));
 		}
 
-		$options = Configure::read('CakeAmqp.queues.' . $this->_consumerQueue);
-		$this->declareQueue($this->_consumerQueue, $options);
+		$this->declareQueue($this->_consumerQueue, $config['queues'][$this->_consumerQueue]);
 	}
 
 /**

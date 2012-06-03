@@ -19,7 +19,7 @@
  */
 class AMQP_CONFIG {
 
-	public static $default = array(
+	public $default = array(
 		'host' => 'localhost',
 		'port' => '5672',
 		'user' => '',
@@ -27,7 +27,7 @@ class AMQP_CONFIG {
 		'vhost' => '/',
 	);
 
-	public static $test = array(
+	public $test = array(
 		'host' => 'localhost',
 		'port' => '5672',
 		'user' => 'user',

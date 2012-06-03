@@ -1,13 +1,6 @@
 <?php
 
-class CakeAmqpBase extends Object {
-
-/**
- * Holds the flag if a connection has been made to the AMQP broker
- *
- * @var boolean 
- */
-	protected $_connected = false;
+abstract class CakeAmqpBase extends Object {
 
 /**
  * Holds the instance of the AMQPConnection object
@@ -22,6 +15,20 @@ class CakeAmqpBase extends Object {
  * @var AMQPChannel 
  */
 	protected $_channel = null;
+
+/**
+ * Holds the exchange instances
+ *
+ * @var array 
+ */
+	protected $_exchanges = array();
+
+/**
+ * Holds the queue instances
+ *
+ * @var array 
+ */
+	protected $_queues = array();
 
 /**
  * List of valid exchange types
@@ -61,27 +68,6 @@ class CakeAmqpBase extends Object {
 	);
 
 /**
- * Holds the configured exchanges
- *
- * @var array 
- */
-	protected $_exchanges = array();
-
-/**
- * Holds the configured queues
- *
- * @var array 
- */
-	protected $_queues = array();
-
-/**
- * Datasource being used
- *
- * @var string 
- */
-	protected $_datasource = null;
-
-/**
  * Connection configuration
  *
  * @var array 
@@ -93,8 +79,8 @@ class CakeAmqpBase extends Object {
  *
  * @throws CakeException 
  */
-	function __construct($datasource = 'default') {
-		$this->_datasource = $datasource;
+	function __construct($config = 'default') {
+		$this->config($config);
 	}
 
 /**
@@ -102,11 +88,46 @@ class CakeAmqpBase extends Object {
  * 
  */
 	function __destruct() {
-		if ($this->_connected) {
+		if ($this->connected()) {
 			$this->_connection->disconnect();
 		}
 	}
 
+/**
+ * Set / Get connection configuration
+ *
+ * @param string|array $config Name of source to load, array of options to set
+ * @return CakeAmqpBase|array
+ * @throws CakeException 
+ */
+	public function config($config = null) {
+		if ($config === null) {
+			return $this->_config;
+		}
+
+		if (is_string($config)) {
+			if (!class_exists('AMQP_CONFIG')) {
+				$path = APP . 'Config' . DS . 'amqp.php';
+				if (!file_exists($path)) {
+					throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
+				}
+				require_once($path);
+			}
+			$configObject = new AMQP_CONFIG();
+
+			if (!isset($configObject->{$config})) {
+				throw new CakeException(__d('cake_amqp', 'Connection not present in configuration file'));
+			}
+
+			$this->config($configObject->{$config});
+		}
+
+		if (is_array($config)) {
+			$this->_config = $config;
+		}
+
+		return $this;
+	}
 /**
  * Returns the current AMQPConnection object
  *
@@ -115,60 +136,70 @@ class CakeAmqpBase extends Object {
  * @return AMQPConnection 
  */
 	public function connection() {
-		if ($this->_connected) {
+		if ($this->connected()) {
 			return $this->_connection;
 		}
 
 		try {
-			$this->_loadConfiguration();
-
-			$this->_connection = new AMQPConnection();
-			$this->_connection->setHost($this->_config['host']);
-			$this->_connection->setPort($this->_config['port']);
-			$this->_connection->setLogin($this->_config['user']);
-			$this->_connection->setPassword($this->_config['pass']);
-			$this->_connection->setVhost($this->_config['vhost']);
-			$this->_connection->connect();
-
-			$this->_channel = new AMQPChannel($this->_connection);
-
-			$this->_connected = true;
-
-			$this->_configure();
-
+			$this->connect();
+			$this->declareConfig();
 			return $this->_connection;
 		} catch (Exception $ex) {
-			$this->_connected = false;
 			throw $ex;
 		}
 	}
 
 /**
- * Loads the datasource configuration
+ * Connects to the broken
  *
+ * @return CakeAmqpBase
  * @throws CakeException 
  */
-	protected function _loadConfiguration() {
-		if (!class_exists('AMQP_CONFIG')) {
-			$path = APP . 'Config' . DS . 'amqp.php';
-
-			if (!file_exists($path)) {
-				throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
-			}
-
-			require_once($path);
+	public function connect() {
+		if($this->connected()) {
+			throw new CakeException(__d('cake_amqp', 'Already connected to broker'));
 		}
 
-		$this->_config = AMQP_CONFIG::${$this->_datasource};
+		$this->_connection = new AMQPConnection();
+		$this->_connection->setHost($this->_config['host']);
+		$this->_connection->setPort($this->_config['port']);
+		$this->_connection->setLogin($this->_config['user']);
+		$this->_connection->setPassword($this->_config['pass']);
+		$this->_connection->setVhost($this->_config['vhost']);
+		$this->_connection->connect();
+		$this->_channel = new AMQPChannel($this->_connection);
+
+		return $this;
 	}
 
 /**
- * Declares configured exchanges, queues and bindings 
+ * Declares objects on the AMQP server
+ *
+ * If $config is left empty, the app configuration would be loaded.
+ *
+ * @param array $config
+ * @throws CakeException
  *
  * @return void
  */
-	protected function _configure() {
-		foreach ((array)Configure::read('CakeAmqp.exchanges') as $name => $options) {
+	public function declareConfig($config = array()) {
+		if (!$this->connected()) {
+			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
+		}
+
+		$appConfig = Configure::read('CakeAmqp');
+		if (empty($config)) {
+			$config = $appConfig;
+		}
+
+		if (empty($config)) {
+			throw new CakeException(__d('cake_amqp', 'Nothing found to configure'));
+		}
+
+		$exchanges = $queues = $bindings = array();
+		extract($config, EXTR_OVERWRITE);
+
+		foreach ($exchanges as $name => $options) {
 			if (is_string($options)) {
 				$name = $options;
 				$options = array();
@@ -176,7 +207,7 @@ class CakeAmqpBase extends Object {
 			$this->declareExchange($name, $options);
 		}
 
-		foreach ((array)Configure::read('CakeAmqp.queues') as $name => $options) {
+		foreach ($queues as $name => $options) {
 			if (is_string($options)) {
 				$name = $options;
 				$options = array();
@@ -184,7 +215,7 @@ class CakeAmqpBase extends Object {
 			$this->declareQueue($name, $options);
 		}
 
-		foreach ((array)Configure::read('CakeAmqp.bindings') as $routingKey => $options) {
+		foreach ($bindings as $routingKey => $options) {
 			$this->bind($routingKey, $options['exchange'], $options['queue'], $options);
 		}
 	}
@@ -206,7 +237,7 @@ class CakeAmqpBase extends Object {
  * @return CakeAmqpBase
  */
 	protected function declareExchange($name, $options = array()) {
-		if ($this->_connected === false) {
+		if (!$this->connected()) {
 			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
 		}
 
@@ -274,7 +305,7 @@ class CakeAmqpBase extends Object {
  * @return CakeAmqpBase
  */
 	protected function declareQueue($name, $options = array()) {
-		if ($this->_connected === false) {
+		if (!$this->connected()) {
 			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
 		}
 
@@ -335,7 +366,7 @@ class CakeAmqpBase extends Object {
  * @return CakeAmqpBase
  */
 	protected function bind($routingKey, $exchange, $queues, $options) {
-		if ($this->_connected === false) {
+		if (!$this->connected()) {
 			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
 		}
 
@@ -362,11 +393,11 @@ class CakeAmqpBase extends Object {
 	}
 
 /**
- * Returns true if connection is active
+ * Returns true if the connection is active
  *
  * @return boolean
  */
 	public function connected() {
-		return $this->_connected;
+		return $this->_connection !== null && $this->_connection->isConnected();
 	}
 }
