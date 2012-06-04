@@ -236,7 +236,7 @@ abstract class CakeAmqpBase extends Object {
  *
  * @return CakeAmqpBase
  */
-	protected function declareExchange($name, $options = array()) {
+	public function declareExchange($name, $options = array()) {
 		if (!$this->connected()) {
 			throw new CakeException(__d('cake_amqp', 'Not connected to broker'));
 		}
