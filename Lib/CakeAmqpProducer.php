@@ -5,7 +5,17 @@ App::uses('CakeAmqpBase', 'CakeAmqp.Lib');
 class CakeAmqpProducer extends CakeAmqpBase {
 
 /**
- * Sends a message to the broker
+ * Default attributes that are sent to the publish method of the exchange.
+ *
+ * @var array
+ */
+	public $defaults = array(
+		'content_type' => 'application/json'
+	);
+
+/**
+ * Sends a message to the broker. $data will be json encoded before it is sent to the broker.
+ * $options will be passed to the publish method's attributes.
  *
  * @param string $exchange
  * @param string $routingKey
@@ -23,6 +33,8 @@ class CakeAmqpProducer extends CakeAmqpBase {
 			throw new CakeException(__d('cake_amqp', 'Exchange does not exist: %s', $exchange));
 		}
 
-		$this->_exchanges[$exchange]->publish($data, $routingKey);
+		$options = $this->defaults + $options;
+
+		$this->_exchanges[$exchange]->publish(json_encode($data), $routingKey, AMQP_NOPARAM, $options);
 	}
 }

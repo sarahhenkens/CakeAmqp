@@ -82,9 +82,7 @@ class CakeAmqpConsumer extends CakeAmqpBase {
  * @return void
  */
 	public function processMessage(AMQPEnvelope $envelope, AMQPQueue $queue) {
-		$data = array(
-			'body' => $envelope->getBody()
-		);
+		$data = json_decode($envelope->getBody(), true);
 
 		call_user_func($this->_callback, $this, $envelope, $data);
 	}
