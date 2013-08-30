@@ -10,7 +10,8 @@ class CakeAmqpProducer extends CakeAmqpBase {
  * @var array
  */
 	public $defaults = array(
-		'content_type' => 'application/json'
+		'content_type' => 'application/json',
+		'timeout' => false
 	);
 
 /**
@@ -34,6 +35,11 @@ class CakeAmqpProducer extends CakeAmqpBase {
 		}
 
 		$options = $this->defaults + $options;
+
+		if ($options['timeout']) {
+			$options['timestamp'] = microtime(true);
+			$options['expires'] = microtime(true) + $options['timeout'];
+		}
 
 		$this->_exchanges[$exchange]->publish(json_encode($data), $routingKey, AMQP_NOPARAM, $options);
 	}
