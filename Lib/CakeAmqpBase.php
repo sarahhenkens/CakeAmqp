@@ -39,7 +39,7 @@ abstract class CakeAmqpBase extends Object {
 		'topic' => AMQP_EX_TYPE_TOPIC,
 		'direct' => AMQP_EX_TYPE_DIRECT,
 		'fanout' => AMQP_EX_TYPE_FANOUT,
-		'headers' => AMQP_EX_TYPE_HEADER
+		'headers' => AMQP_EX_TYPE_HEADERS
 	);
 
 /**
