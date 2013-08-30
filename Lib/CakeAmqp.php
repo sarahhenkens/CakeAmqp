@@ -25,6 +25,15 @@ class CakeAmqp extends Object {
 	}
 
 /**
+ * Utility method to set the instance
+ *
+ * @param Object $object
+ */
+	public static function setInstance($object) {
+		self::$_instance = $object;
+	}
+
+/**
  * Static method for sending messages
  *
  * @see CakeAmqpProducer::send()
