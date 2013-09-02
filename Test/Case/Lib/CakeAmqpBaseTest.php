@@ -2,6 +2,8 @@
 
 App::uses('CakeAmqpBase', 'CakeAmqp.Lib');
 
+Configure::write('CakeAmqp.config_path', __DIR__ . DS . '..' . DS . '..' . DS . 'test_app' . DS . 'Config' . DS);
+
 class MockAMQPConnection {
 	public function isConnected() {}
 	public function connect() {}
@@ -55,6 +57,28 @@ class CakeAmqpBaseTest extends CakeTestCase {
 		$result = $this->cakeAmqpBase->config($config);
 		$this->assertTrue($result instanceof CakeAmqpBase);
 		$this->assertEquals($config, $this->cakeAmqpBase->config());
+
+		$result = $this->cakeAmqpBase->config('one');
+		$this->assertTrue($result instanceof CakeAmqpBase);
+		$result = $this->cakeAmqpBase->config();
+		$this->assertEquals('username-one', $result['user']);
+
+		$result = $this->cakeAmqpBase->config('two');
+		$this->assertTrue($result instanceof CakeAmqpBase);
+		$result = $this->cakeAmqpBase->config();
+		$this->assertEquals('username-two', $result['user']);
+	}
+
+/**
+ * testConfigInvalidKey method
+ *
+ * @expectedException CakeException
+ * @expectedExceptionMessage Connection not present in configuration file
+ *
+ * @return void
+ */
+	public function testConfigInvalidKey() {
+		$this->cakeAmqpBase->config('foobar');
 	}
 
 /**

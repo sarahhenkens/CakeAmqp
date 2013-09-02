@@ -1,5 +1,9 @@
 <?php
 
+if (!Configure::check('CakeAmqp.config_path')) {
+	Configure::write('CakeAmqp.config_path', APP . 'Config' . DS);
+}
+
 abstract class CakeAmqpBase extends Object {
 
 /**
@@ -107,7 +111,7 @@ abstract class CakeAmqpBase extends Object {
 
 		if (is_string($config)) {
 			if (!class_exists('AMQP_CONFIG')) {
-				$path = APP . 'Config' . DS . 'amqp.php';
+				$path = Configure::read('CakeAmqp.config_path') . 'amqp.php';
 				if (!file_exists($path)) {
 					throw new CakeException(__d('cake_amqp', 'Configuration file not found: %s', $path));
 				}

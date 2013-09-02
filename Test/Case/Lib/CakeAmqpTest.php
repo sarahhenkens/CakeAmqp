@@ -2,13 +2,11 @@
 
 App::uses('CakeAmqp', 'CakeAmqp.Lib');
 
+Configure::write('CakeAmqp.config_path', __DIR__ . DS . '..' . DS . '..' . DS . 'test_app' . DS . 'Config' . DS);
+
 class TestCakeAmqp extends CakeAmqp {
 	public static function reset() {
 		self::$_instance = null;
-	}
-
-	public function setInstance($instance) {
-		self::$_instance = $instance;
 	}
 }
 
